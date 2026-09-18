@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>هتل شرک - طبقه بالا (راهرو و اتاق‌ها)</title>
+    <style>
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            transition: filter 0.5s ease;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .prompt-box {
+            position: absolute;
+            top: 65%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 215, 0, 0.9);
+            color: #000;
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+            z-index: 20;
+            border: 3px solid #006400;
+        }
+
+        #crosshair {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px; height: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+            border: 2px solid #000;
+        }
+
+        #room-info {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #FFD700;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            display: none;
+            z-index: 30;
+            border: 2px solid #FFD700;
+        }
+
+        /* افکت کابوس (قرمز و لرزان) */
+        .nightmare-effect {
+            filter: sepia(100%) saturate(600%) hue-rotate(-35deg) brightness(60%) contrast(160%);
+            animation: shake 0.4s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            50% { transform: translate(-2px, -2px) rotate(-1deg); }
+            100% { transform: translate(2px, -2px) rotate(1deg); }
+        }
+
+        #blackout-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 100;
+            display: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="room-prompt" class="prompt-box">[E] ورود به اتاق</div>
+    <div id="room-info">داخل اتاق - برای خروج دور شو یا کلید E را بزن</div>
+    <div id="blackout-screen"></div>
+
+    <div id="crosshair"></div>
+    <div id="canvas-container"></div>
+
+    <script>
+        let gameStarted = true;
+        let nearRoom1 = false;
+        let nearRoom2 = false;
+        let nearBed = false;
+        let nearCloset = false;
+        let nearElevator = false; // نزدیک آسانسور
+        let currentRoom = 0; // 0: در راهرو, 1: داخل اتاق 1, 2: داخل اتاق 2
+        let isSleeping = false;
+        let hasHadNightmare = false;
+        let isEnteringElevator = false;
+
+        document.body.requestPointerLock();
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        scene.fog = new THREE.FogExp2(0x1a1a1a, 0.05);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.2, 3);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const hallwayLight = new THREE.PointLight(0xffaa00, 1.0, 10);
+        hallwayLight.position.set(0, 3, -4);
+        scene.add(hallwayLight);
+
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x442211 });
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+
+        // --- ساخت راهرو ---
+        const hallwayGroup = new THREE.Group();
+        const hallwayFloor = new THREE.Mesh(new THREE.PlaneGeometry(4, 12), floorMat);
+        hallwayFloor.rotation.x = -Math.PI / 2;
+        hallwayFloor.position.set(0, 0, -5);
+        hallwayGroup.add(hallwayFloor);
+
+        const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 6), wallMat);
+        leftWall.rotation.y = Math.PI / 2;
+        leftWall.position.set(-2, 3, -5);
+        hallwayGroup.add(leftWall);
+
+        const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 6), wallMat);
+        rightWall.rotation.y = -Math.PI / 2;
+        rightWall.position.set(2, 3, -5);
+        hallwayGroup.add(rightWall);
+
+        const room1Door = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 2), doorMat);
+        room1Door.position.set(-1.9, 1.5, -4);
+        hallwayGroup.add(room1Door);
+
+        const room2Door = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 2), doorMat);
+        room2Door.position.set(1.9, 1.5, -7);
+        hallwayGroup.add(room2Door);
+
+        // آسانسور انتهای راهرو
+        const elevatorBox = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3.5, 0.2), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+        elevatorBox.position.set(0, 1.75, -11.0);
+        hallwayGroup.add(elevatorBox);
+        const yellowDoor = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.2, 0.1), new THREE.MeshStandardMaterial({ color: 0xFFD700, roughness: 0.3 }));
+        yellowDoor.position.set(0, 1.75, -10.95);
+        hallwayGroup.add(yellowDoor);
+
+        scene.add(hallwayGroup);
+
+        // --- ساخت اتاق اول ---
+        const room1Group = new THREE.Group();
+        room1Group.position.set(-10, 0, 0); 
+        
+        const r1Floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({ color: 0x554433 }));
+        r1Floor.rotation.x = -Math.PI / 2;
+        room1Group.add(r1Floor);
+
+        // تخت
+        const bedGeo = new THREE.BoxGeometry(1.5, 0.6, 2.0);
+        const bedMat = new THREE.MeshStandardMaterial({ color: 0x880000 });
+        const bed = new THREE.Mesh(bedGeo, bedMat);
+        bed.position.set(-1.5, 0.3, -1.5);
+        room1Group.add(bed);
+
+        // کمد
+        const closetGeo = new THREE.BoxGeometry(1.0, 2.5, 0.6);
+        const closetMat = new THREE.MeshStandardMaterial({ color: 0x443322 });
+        const closet = new THREE.Mesh(closetGeo, closetMat);
+        closet.position.set(1.5, 1.25, -2.2);
+        room1Group.add(closet);
+
+        scene.add(room1Group);
+
+        // --- ساخت اتاق دوم ---
+        const room2Group = new THREE.Group();
+        room2Group.position.set(10, 0, 0);
+
+        const r2Floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({ color: 0x334455 }));
+        r2Floor.rotation.x = -Math.PI / 2;
+        room2Group.add(r2Floor);
+
+        const tableGeo = new THREE.BoxGeometry(1.2, 1.0, 1.2);
+        const tableMat = new THREE.MeshStandardMaterial({ color: 0x654321 });
+        const table = new THREE.Mesh(tableGeo, tableMat);
+        table.position.set(1.5, 0.5, -1.5);
+        room2Group.add(table);
+        scene.add(room2Group);
+
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+
+        let euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        const PI_2 = Math.PI / 2;
+
+        window.addEventListener('click', () => {
+            if (gameStarted && document.pointerLockElement !== document.body && !isSleeping && !isEnteringElevator) {
+                document.body.requestPointerLock();
+            }
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (!gameStarted || isSleeping || isEnteringElevator || document.pointerLockElement !== document.body) return;
+            const movementX = event.movementX || event.mozMovementX || 0;
+            const movementY = event.movementY || event.mozMovementY || 0;
+            euler.setFromQuaternion(camera.quaternion);
+            euler.y -= movementX * 0.002;
+            euler.x -= movementY * 0.002;
+            euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
+            camera.quaternion.setFromEuler(euler);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted || isSleeping || isEnteringElevator) return;
+
+            switch (e.code) {
+                case 'KeyW': case 'ArrowUp': moveForward = true; break;
+                case 'KeyS': case 'ArrowDown': moveBackward = true; break;
+                case 'KeyA': case 'ArrowLeft': moveLeft = true; break;
+                case 'KeyD': case 'ArrowRight': moveRight = true; break;
+                case 'KeyE':
+                    if (currentRoom === 0) {
+                        if (nearRoom1) enterRoom(1);
+                        else if (nearRoom2) enterRoom(2);
+                        else if (hasHadNightmare && nearElevator) enterElevator(); // سوار شدن به آسانسور بعد از کابوس
+                    } else {
+                        exitRoom();
+                    }
+                    break;
+                case 'KeyF': // زدن کلید F روی تخت برای خوابیدن و دیدن کابوس
+                    if (currentRoom === 1 && nearBed && !hasHadNightmare) {
+                        startSleepAndNightmare();
+                    }
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (!gameStarted) return;
+            switch (e.code) {
+                case 'KeyW': case 'ArrowUp': moveForward = false; break;
+                case 'KeyS': case 'ArrowDown': moveBackward = false; break;
+                case 'KeyA': case 'ArrowLeft': moveLeft = false; break;
+                case 'KeyD': case 'ArrowRight': moveRight = false; break;
+            }
+        });
+
+        function enterRoom(roomNum) {
+            currentRoom = roomNum;
+            document.getElementById('room-info').style.display = 'block';
+            if (roomNum === 1) {
+                camera.position.set(-10, 1.2, 1);
+            } else if (roomNum === 2) {
+                camera.position.set(10, 1.2, 1);
+            }
+        }
+
+        function exitRoom() {
+            currentRoom = 0;
+            document.getElementById('room-info').style.display = 'none';
+            if (nearRoom1) {
+                camera.position.set(0, 1.2, -4);
+            } else {
+                camera.position.set(0, 1.2, -7);
+            }
+            nearBed = false;
+            nearCloset = false;
+        }
+
+        // --- سیستم خوابیدن، سیاه شدن صفحه برای ۱ ثانیه و شروع کابوس ---
+        function startSleepAndNightmare() {
+            isSleeping = true;
+            const blackout = document.getElementById('blackout-screen');
+            blackout.style.display = 'block'; // صفحه سیاه میشه
+
+            // بعد از 1 ثانیه صفحه برمی‌گرده ولی با کابوس!
+            setTimeout(() => {
+                blackout.style.display = 'none'; // صفحه سیاه میره کنار
+                isSleeping = false;
+                hasHadNightmare = true;
+
+                // فعال کردن افکت کابوس (قرمز و لرزان)
+                document.body.classList.add('nightmare-effect');
+                camera.rotation.z = Math.PI / 12; // کج شدن کمی زاویه دوربین
+
+                // تغییر متن راهنما
+                const info = document.getElementById('room-info');
+                info.style.display = 'block';
+                info.innerText = "کابوس دیدی! سریع از اتاق فرار کن و برو آسانسور!";
+                info.style.color = '#ff3333';
+                info.style.borderColor = '#ff3333';
+            }, 1000); // دقیقاً 1 ثانیه مکث سیاهی
+        }
+
+        // --- رفتن به فایل 14s.html با زدن E روی آسانسور بعد از بیدار شدن از کابوس ---
+        function enterElevator() {
+            isEnteringElevator = true;
+            document.exitPointerLock();
+            const blackout = document.getElementById('blackout-screen');
+            blackout.style.display = 'block'; // سیاه شدن صفحه
+
+            setTimeout(() => {
+                window.location.href = '14s.html';
+            }, 1000);
+        }
+
+        const clock = new THREE.Clock();
+        const vecCamera = new THREE.Vector3();
+        const vecRoom1 = new THREE.Vector3(-1.5, 1.2, -4);
+        const vecRoom2 = new THREE.Vector3(1.5, 1.2, -7);
+        const vecElevator = new THREE.Vector3(0, 1.2, -9.5); // مختصات جلوی آسانسور
+        
+        const vecBed = new THREE.Vector3(-11.5, 1.2, -1.5);
+        const vecCloset = new THREE.Vector3(-8.5, 1.2, -2.2);
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (gameStarted && !isSleeping && !isEnteringElevator) {
+                const delta = clock.getDelta();
+                const speed = 4.0 * delta;
+
+                const dir = new THREE.Vector3();
+                camera.getWorldDirection(dir);
+                dir.y = 0;
+                dir.normalize();
+
+                const sideDir = new THREE.Vector3(dir.z, 0, -dir.x);
+
+                let nextX = camera.position.x;
+                let nextZ = camera.position.z;
+
+                if (moveForward) { nextX += dir.x * speed; nextZ += dir.z * speed; }
+                if (moveBackward) { nextX -= dir.x * speed; nextZ -= dir.z * speed; }
+                if (moveLeft) { nextX += sideDir.x * speed; nextZ += sideDir.z * speed; }
+                if (moveRight) { nextX -= sideDir.x * speed; nextZ -= sideDir.z * speed; }
+
+                if (currentRoom === 0) {
+                    nextX = Math.max(-1.7, Math.min(1.7, nextX));
+                    nextZ = Math.max(-11.5, Math.min(3, nextZ));
+                } else {
+                    nextX = Math.max(currentRoom === 1 ? -12.5 : 7.5, Math.min(currentRoom === 1 ? -7.5 : 12.5, nextX));
+                    nextZ = Math.max(currentRoom === 1 ? -2.5 : -2.5, Math.min(currentRoom === 1 ? 2.5 : 2.5, nextZ));
+                }
+
+                camera.position.x = nextX;
+                camera.position.z = nextZ;
+                camera.position.y = 1.2;
+
+                vecCamera.set(camera.position.x, camera.position.y, camera.position.z);
+                const promptBox = document.getElementById('room-prompt');
+
+                if (currentRoom === 0) {
+                    const dist1 = vecCamera.distanceTo(vecRoom1);
+                    const dist2 = vecCamera.distanceTo(vecRoom2);
+                    const distElevator = vecCamera.distanceTo(vecElevator);
+
+                    if (dist1 < 1.8) {
+                        nearRoom1 = true;
+                        nearRoom2 = false;
+                        nearElevator = false;
+                        promptBox.innerText = "[E] ورود به اتاق اول";
+                        promptBox.style.display = 'block';
+                    } else if (dist2 < 1.8) {
+                        nearRoom2 = true;
+                        nearRoom1 = false;
+                        nearElevator = false;
+                        promptBox.innerText = "[E] ورود به اتاق دوم";
+                        promptBox.style.display = 'block';
+                    } else if (hasHadNightmare && distElevator < 1.8) {
+                        nearElevator = true;
+                        nearRoom1 = false;
+                        nearRoom2 = false;
+                        promptBox.innerText = "[E] ورود به آسانسور (رفتن به طبقه پایین)";
+                        promptBox.style.display = 'block';
+                    } else {
+                        nearRoom1 = false;
+                        nearRoom2 = false;
+                        nearElevator = false;
+                        promptBox.style.display = 'none';
+                    }
+                } else if (currentRoom === 1) {
+                    const distBed = vecCamera.distanceTo(vecBed);
+                    const distCloset = vecCamera.distanceTo(vecCloset);
+
+                    if (distBed < 1.5 && !hasHadNightmare) {
+                        nearBed = true;
+                        promptBox.innerText = "[F] خوابیدن روی تخت";
+                        promptBox.style.display = 'block';
+                    } else if (distCloset < 1.3) {
+                        nearCloset = true;
+                        promptBox.innerText = "یک کمد چوبی قدیمی...";
+                        promptBox.style.display = 'block';
+                    } else {
+                        nearBed = false;
+                        nearCloset = false;
+                        promptBox.style.display = 'none';
+                    }
+                } else {
+                    promptBox.style.display = 'none';
+                }
+            }
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
