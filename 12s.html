@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>هتل شرک - لابی و آسانسور زرد</title>
+    <title>Shrek Hotel - Lobby & Yellow Elevator</title>
     <style>
         * { box-sizing: border-box; }
         body, html {
@@ -60,7 +60,7 @@
             display: none;
             width: 80%;
             max-width: 700px;
-            text-align: right;
+            text-align: left;
             z-index: 30;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
@@ -75,7 +75,7 @@
         #dialogue-hint {
             font-size: 13px;
             color: #ddd;
-            text-align: left;
+            text-align: right;
             margin-top: 10px;
         }
 
@@ -95,16 +95,16 @@
 </head>
 <body>
 
-    <div id="interaction-prompt" class="prompt-box">[E] صحبت با مهماندار</div>
-    <div id="elevator-prompt" class="prompt-box">[E] ورود به آسانسور</div>
+    <div id="interaction-prompt" class="prompt-box">[E] Talk to Clerk</div>
+    <div id="elevator-prompt" class="prompt-box">[E] Enter Elevator</div>
     
     <div id="dialogue-box">
-        <div id="dialogue-speaker">گوینده</div>
-        <div id="dialogue-text">متن دیالوگ...</div>
-        <div id="dialogue-hint">[ SPACE ] برای ادامه</div>
+        <div id="dialogue-speaker">Speaker</div>
+        <div id="dialogue-text">Dialogue text...</div>
+        <div id="dialogue-hint">[ SPACE ] to continue</div>
     </div>
 
-    <div id="transition-screen">در حال رفتن به طبقات بالا...</div>
+    <div id="transition-screen">Heading to upper floors...</div>
     <div id="crosshair"></div>
     <div id="canvas-container"></div>
 
@@ -117,8 +117,8 @@
         let dialogueStep = 0;
 
         const dialogueLines = [
-            { speaker: "الیسا لام", text: "سلام، خوبی؟ من یک اتاق می‌خواستم رزرو کنم." },
-            { speaker: "مهماندار هتل", text: "سلام! بفرمایید، اینم کلید اتاق شما." }
+            { speaker: "Elisa Lam", text: "Hello there? I would like to book a room, please." },
+            { speaker: "Hotel Clerk", text: "Here is your key. And remember: Never enter room 2!" }
         ];
 
         document.body.requestPointerLock();
@@ -174,15 +174,13 @@
         clerkGroup.add(head);
         scene.add(clerkGroup);
 
-        // --- آسانسور زرد رنگ ---
+        // --- Yellow Elevator ---
         const elevatorGroup = new THREE.Group();
-        // چهارچوب آسانسور
         const frameMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
         const elevatorBox = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3.5, 0.2), frameMat);
         elevatorBox.position.set(4, 1.75, -5.9);
         elevatorGroup.add(elevatorBox);
 
-        // درب آسانسور (رنگ زرد جیغ و فانتزی)
         const yellowDoorMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, roughness: 0.3 });
         const elevatorDoor = new THREE.Mesh(new THREE.BoxGeometry(2.0, 3.2, 0.1), yellowDoorMat);
         elevatorDoor.position.set(4, 1.75, -5.85);

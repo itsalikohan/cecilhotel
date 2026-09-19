@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>هتل شرک - داخل آسانسور</title>
+    <title>Shrek's Hotel - Inside Elevator</title>
     <style>
         * { box-sizing: border-box; }
         body, html {
@@ -22,7 +22,7 @@
 
         #room-info {
             position: absolute;
-            top: 20px; right: 20px;
+            top: 20px; left: 20px;
             background: rgba(0, 0, 0, 0.8);
             color: #ff3333;
             padding: 10px 20px;
@@ -44,7 +44,6 @@
             border: 2px solid #000;
         }
 
-        /* عکسِ رو صفحه (14si1p.png) که دقیقاً با صدا میاد جلو */
         #jumpscare-image {
             position: absolute;
             top: 0; left: 0;
@@ -56,7 +55,6 @@
             transition: opacity 0.1s ease;
         }
 
-        /* افکت کابوس (قرمز و لرزان) */
         .nightmare-effect {
             filter: sepia(100%) saturate(600%) hue-rotate(-35deg) brightness(55%) contrast(160%);
             animation: shake 0.4s infinite;
@@ -81,13 +79,10 @@
 </head>
 <body class="nightmare-effect">
 
-    <div id="room-info">در حال انتقال با آسانسور...</div>
+    <div id="room-info">Moving with elevator...</div>
     <div id="blackout-screen"></div>
 
-    <!-- عکس مورد نظر -->
     <img id="jumpscare-image" src="14si1p.png" alt="Nightmare Event">
-
-    <!-- فایل صوتی اختصاصی 14si1p.mp3 با ولوم ۱۰۰٪ (حداکثر بلندی) -->
     <audio id="jumpscare-audio" src="14si1p.mp3" preload="auto"></audio>
 
     <div id="crosshair"></div>
@@ -106,22 +101,18 @@
                     gameStarted = true;
                     document.body.requestPointerLock();
 
-                    // --- تایمر ۴ ثانیه‌ای برای شروع انفجار وحشت! ---
                     setTimeout(() => {
                         if (!eventTriggered) {
                             eventTriggered = true;
 
-                            // پخش با حداکثر بلندی صدا (Volume = 1.0)
                             const audio = document.getElementById('jumpscare-audio');
                             audio.volume = 1.0;
                             audio.play().catch(e => console.log("Audio play blocked by browser policy:", e));
 
-                            // نمایش عکس 14si1p.png وسط صفحه
                             const img = document.getElementById('jumpscare-image');
                             img.style.display = 'block';
                             img.style.opacity = '1';
 
-                            // بعد از 1.5 ثانیه عکس میره و بلافاصله وارد 15s.html میشه
                             setTimeout(() => {
                                 img.style.opacity = '0';
                                 setTimeout(() => {
@@ -129,7 +120,7 @@
                                 }, 200);
                             }, 1500);
                         }
-                    }, 4000); // ۴ ثانیه بعد از ورود
+                    }, 4000);
 
                 }, 1000);
             }, 500);

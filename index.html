@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>هتل سسیل - ورود با کلید E</title>
+    <title>Cecil Hotel - Press E to Enter</title>
     <style>
         * { box-sizing: border-box; }
         body, html {
@@ -14,7 +14,7 @@
             font-family: 'Courier New', Courier, monospace;
         }
 
-        /* منوی اصلی */
+        /* Main Menu */
         #menu-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -77,7 +77,7 @@
             transform: scale(1.03);
         }
 
-        /* صفحه سیاه هنگام انتقال */
+        /* Transition Screen */
         #transition-screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -96,7 +96,7 @@
             display: none;
         }
 
-        /* نشانگر تعامل (وقتی نزدیک در هستی) */
+        /* Interaction Prompt */
         #interaction-prompt {
             position: absolute;
             top: 60%; left: 50%;
@@ -125,28 +125,29 @@
             z-index: 10;
         }
     </style>
-    <!-- موتور Three.js -->
+    <!-- Three.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <!-- منوی اصلی -->
+    <!-- Main Menu -->
     <div id="menu-layer">
         <div class="menu-box">
-            <h1>هتل سسیل</h1>
-            <div class="subtitle">داستان واقعی</div>
-            <button class="menu-btn" onclick="startCecilGame()">شروع تحقیق</button>
-            <button class="menu-btn" onclick="window.close()">خروج</button>
+            <h1>Cecil Hotel</h1>
+            <div class="subtitle">A True Story</div>
+            <button class="menu-btn" onclick="startCecilGame()">Start Investigation</button>
+            <button class="menu-btn" onclick="openHerobrineCraft()">Herobrine Craft</button>
+            <button class="menu-btn" onclick="exitGame()">Exit</button>
         </div>
     </div>
 
-    <!-- صفحه سیاه انتقال -->
+    <!-- Transition Screen -->
     <div id="transition-screen">
-        در حال بارگذاری هتل سسیل...
+        Loading Cecil Hotel...
     </div>
 
-    <!-- راهنمای روی صفحه و نشانگر -->
-    <div id="interaction-prompt">[E] برای ورود به هتل بزنید</div>
+    <!-- On-screen Prompt & Crosshair -->
+    <div id="interaction-prompt">Press [E] to Enter the Hotel</div>
     <div id="crosshair"></div>
     <div id="canvas-container"></div>
 
@@ -165,20 +166,30 @@
             } catch (e) { console.log(e); }
         }
 
-        // راه‌اندازی صحنه سه‌بعدی (روز)
+        // Open Herobrine Craft in external browser
+        function openHerobrineCraft() {
+            window.open('https://itsalikohan.github.io/herobrinecraft/', '_blank');
+        }
+
+        // Exit prompt
+        function exitGame() {
+            alert("To exit the game, please press Alt + F4 on your keyboard.");
+        }
+
+        // 3D Scene Setup (Daylight)
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87ceeb); // آسمان آبی روز
+        scene.background = new THREE.Color(0x87ceeb); // Daylight sky
         scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 1.7, 12); // شروع کاراکتر از فاصله دورتر
+        camera.position.set(0, 1.7, 12);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // نورپردازی روز
+        // Lighting
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
 
@@ -187,7 +198,7 @@
         sunLight.castShadow = true;
         scene.add(sunLight);
 
-        // زمین خیابان
+        // Street Ground
         const streetGeo = new THREE.PlaneGeometry(200, 200);
         const streetMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 });
         const street = new THREE.Mesh(streetGeo, streetMat);
@@ -196,24 +207,23 @@
         street.receiveShadow = true;
         scene.add(street);
 
-        // --- ساختمان هتل سسیل ---
+        // --- Cecil Hotel Building ---
         const hotelGroup = new THREE.Group();
-        // بدنه اصلی
         const buildingMat = new THREE.MeshStandardMaterial({ color: 0xaa7744, roughness: 0.7 });
         const buildingBody = new THREE.Mesh(new THREE.BoxGeometry(20, 25, 15), buildingMat);
         buildingBody.position.set(0, 12.5, -15);
         buildingBody.castShadow = true;
         hotelGroup.add(buildingBody);
 
-        // در ورودی (هدف اصلی)
+        // Entrance Door
         const doorParams = new THREE.BoxGeometry(4, 6, 0.5);
         const doorMat = new THREE.MeshStandardMaterial({ color: 0x442211, roughness: 0.4 });
         const doorMesh = new THREE.Mesh(doorParams, doorMat);
-        doorMesh.position.set(0, 3, -7.2); // جلوتر از بدنه اصلی
-        doorMesh.name = "mainDoor"; // نام‌گذاری برای تشخیص
+        doorMesh.position.set(0, 3, -7.2);
+        doorMesh.name = "mainDoor";
         hotelGroup.add(doorMesh);
 
-        // پنجره‌ها
+        // Windows
         const windowMat = new THREE.MeshStandardMaterial({ color: 0x224466, roughness: 0.2 });
         for(let x = -6; x <= 6; x+=6) {
             for(let y = 6; y <= 20; y+=5) {
@@ -230,7 +240,7 @@
 
         scene.add(hotelGroup);
 
-        // متغیرهای حرکت
+        // Movement Variables
         let moveForward = false;
         let moveBackward = false;
         let moveLeft = false;
@@ -263,7 +273,7 @@
                 case 'KeyS': case 'ArrowDown': moveBackward = true; break;
                 case 'KeyA': case 'ArrowLeft': moveLeft = true; break;
                 case 'KeyD': case 'ArrowRight': moveRight = true; break;
-                case 'KeyE': // زدن کلید E برای ورود
+                case 'KeyE':
                     if (nearDoor) {
                         enterCecilBuilding();
                     }
@@ -281,19 +291,14 @@
             }
         });
 
-        // تابع ورود به هتل و باز کردن فایل 12s.html
         function enterCecilBuilding() {
             gameStarted = false;
             document.exitPointerLock();
             
-            // نمایش صفحه سیاه انتقال
             const transScreen = document.getElementById('transition-screen');
             transScreen.style.display = 'flex';
             
-            // کمی مکث برای حس واقعی‌تر (اختیاری)
             setTimeout(() => {
-                // **اینجا فایل 12s.html که کنار فایل اصلی هست باز میشه**
-                // اگر فایل 12s.html کنار این فایل نیست، آدرس کاملش رو بده
                 window.location.href = '12s.html';
             }, 1000);
         }
@@ -321,20 +326,16 @@
                 if (moveLeft) camera.position.addScaledVector(sideDir, speed);
                 if (moveRight) camera.position.addScaledVector(sideDir, -speed);
 
-                // محدودیت حرکت در محوطه
                 camera.position.x = Math.max(-30, Math.min(30, camera.position.x));
                 camera.position.z = Math.max(-5, Math.min(50, camera.position.z));
                 camera.position.y = 1.7;
 
-                // بررسی فاصله تا در ورودی (نزدیک شدن)
                 vecCamera.set(camera.position.x, camera.position.y, camera.position.z);
-                // مختصات حدودی جلوی در
                 vecDoor.set(0, 3, -5.5); 
 
                 const distance = vecCamera.distanceTo(vecDoor);
-                
                 const prompt = document.getElementById('interaction-prompt');
-                if (distance < 6) { // اگر فاصله کمتر از 6 واحد باشه
+                if (distance < 6) {
                     nearDoor = true;
                     prompt.style.display = 'block';
                 } else {

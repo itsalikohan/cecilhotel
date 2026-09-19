@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>هتل شرک - پرونده مخزن آب</title>
+    <title>Shrek's Hotel - Water Tank File</title>
     <style>
         * { box-sizing: border-box; }
         body, html {
@@ -20,7 +20,7 @@
             display: block;
         }
 
-        /* استایل مشترک کادرهای داستان */
+        /* Common story box styles */
         .story-box {
             position: absolute;
             top: 50%; left: 50%;
@@ -66,7 +66,7 @@
             100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 20px rgba(255,0,0,0.3); }
         }
 
-        /* بخش‌های نمایش عکس و مدارک */
+        /* Image and evidence display sections */
         .evidence-container {
             position: absolute;
             top: 0; left: 0;
@@ -127,25 +127,25 @@
 
     <div id="blackout-screen"></div>
 
-    <!-- مرحله 1: مرگ دختر -->
+    <!-- Stage 1: Girl's Death -->
     <div id="stage-1" class="story-box">
-        <h1>پرونده بسته شد...</h1>
-        <p>دختره مرد! دیگه خیلی دیر شده...</p>
-        <div class="hint-text">[ برای ادامه کلید Space را فشار دهید ]</div>
+        <h1>Case Closed...</h1>
+        <p>The girl is dead! It's way too late...</p>
+        <div class="hint-text">[ Press Space to Continue ]</div>
     </div>
 
-    <!-- مرحله 2: عکس 15sid1p.jpg و شکایت از آب هتل -->
+    <!-- Stage 2: Image 15sid1p.jpg & Hotel Water Complaints -->
     <div id="stage-2" class="evidence-container">
         <img class="evidence-image" src="15sid1p.jpg" alt="Water Evidence 1">
-        <div class="evidence-text">مشتری‌ها می‌گفتند آب این هتل خیلی بده...</div>
-        <div class="hint-text">[ برای ادامه کلید Space را فشار دهید ]</div>
+        <div class="evidence-text">Customers complained that the hotel's water tasted terrible...</div>
+        <div class="hint-text">[ Press Space to Continue ]</div>
     </div>
 
-    <!-- مرحله 3: عکس 15sid2p.jpg و کشف جنازه در مخزن آب -->
+    <!-- Stage 3: Image 15sid2p.jpg & Discovering Corpse in Water Tank -->
     <div id="stage-3" class="evidence-container">
         <img class="evidence-image" src="15sid2p.jpg" alt="Water Evidence 2">
-        <div class="evidence-text">چندتا کارگر رفتند تا ببینند داخل مخزن آب هتل چی هستش... و جنازه‌ی دختره را دیدند!</div>
-        <div class="hint-text">[ برای رفتن به مرحله بعد کلید Space را فشار دهید ]</div>
+        <div class="evidence-text">Some workers went to check what was inside the hotel's water tank... and found the girl's corpse!</div>
+        <div class="hint-text">[ Press Space to Proceed to Next Stage ]</div>
     </div>
 
     <div id="crosshair"></div>
@@ -153,7 +153,7 @@
 
     <script>
         let gameStarted = false;
-        let currentStage = 1; // مرحله فعلی بازی
+        let currentStage = 1;
 
         window.addEventListener('load', () => {
             setTimeout(() => {
@@ -167,7 +167,7 @@
             }, 500);
         });
 
-        // مدیریت زدن کلید اسپیس برای پیشبرد مراحل داستان
+        // Handle spacebar press to advance story stages
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && gameStarted) {
                 if (currentStage === 1) {
@@ -179,7 +179,7 @@
                     document.getElementById('stage-2').style.display = 'none';
                     document.getElementById('stage-3').style.display = 'flex';
                 } else if (currentStage === 3) {
-                    // بعد از زدن اسپیس در این مرحله، بازیکن به فایل 16s.html هدایت میشه
+                    // Redirects to 16s.html after pressing space in this stage
                     window.location.href = '16s.html';
                 }
             }
